@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClawPortal — Squad de IA para os seus repositórios</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            portal: {
+              bg: '#0a0d14',
+              panel: '#0e131f',
+              card: '#121826',
+              border: '#1c2438',
+              accent: '#6366f1',
+              purple: '#7c3aed',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      background-color: #0a0d14;
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0d14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1c2438;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2d3748;
+    }
+    .file-tree-active {
+      background: rgba(99, 102, 241, 0.15);
+      color: #c7d2fe;
+      border-left: 2px solid #6366f1;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-indigo-600 selection:text-white">
+
+  <!-- ========================================== -->
+  <!-- TOP GLOBAL HEADER (Fiel aos 3 prints)     -->
+  <!-- ========================================== -->
+  <header class="border-b border-portal-border bg-[#0b0f19] px-6 py-3 sticky top-0 z-40">
+    <div class="max-w-[1700px] mx-auto flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('catalog')">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-sky-400 p-0.5 flex items-center justify-center shadow-lg shadow-indigo-600/20">
+          <div class="w-full h-full bg-[#0a0d14] rounded-[10px] flex items-center justify-center">
+            <i data-lucide="cpu" class="w-5 h-5 text-sky-400"></i>
+          </div>
+        </div>
+        <div>
+          <span class="font-bold text-base text-white tracking-tight">ClawPortal</span>
+          <p class="text-[11px] text-slate-400">Squad de IA para os seus repositórios</p>
+        </div>
+      </div>
+
+      <!-- Center Status Pill -->
+      <div class="hidden md:flex items-center gap-4 px-4 py-1.5 rounded-full bg-[#111726] border border-portal-border text-xs">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span class="text-slate-400">Squad:</span>
+          <span class="text-emerald-400 font-medium">4 agentes</span>
+        </div>
+        <div class="h-3 w-px bg-portal-border"></div>
+        <div class="px-2 py-0.5 rounded bg-portal-card border border-portal-border text-slate-300 font-mono text-[11px]">
+          Modo simulação / CLI
+        </div>
+        <div class="h-3 w-px bg-portal-border"></div>
+        <div class="flex items-center gap-1.5 text-slate-400 font-mono text-[11px]">
+          <i data-lucide="git-pull-request" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span>PR automático: <span class="text-slate-300">desligado</span></span>
+        </div>
+      </div>
+
+      <!-- Right Action -->
+      <div class="flex items-center gap-3">
+        <button onclick="openModal('new-app-modal')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition shadow-md shadow-indigo-600/25">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Novo app</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- VIEW 1: CATALOG OF APPLICATIONS            -->
+  <!-- ========================================== -->
+  <main id="view-catalog" class="max-w-[1700px] w-full mx-auto px-6 py-6 flex-1">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-xl font-bold text-white tracking-tight">Catálogo de Aplicações</h1>
+        <p class="text-xs text-slate-400 mt-1">Repositórios gerenciados continuamente pela sua Squad de Engenharia de IA.</p>
+      </div>
+      <div class="relative w-80">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+        <input 
+          type="text" 
+          id="catalog-search"
+          oninput="renderCatalog()"
+          placeholder="Buscar repositório ou stack..." 
+          class="w-full bg-[#111726] border border-portal-border rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+        />
+      </div>
+    </div>
+
+    <!-- Grid de Aplicações -->
+    <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Renderizado via JS -->
+    </div>
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- VIEW 2: WORKSPACE DO REPOSITÓRIO (Menus Separados Grok) -->
+  <!-- ======================================================== -->
+  <main id="view-workspace" class="hidden max-w-[1700px] w-full mx-auto px-6 py-5 flex-1 flex flex-col">
+    
+    <!-- Top Workspace Bar (Voltar ao Catálogo) -->
+    <div class="mb-4">
+      <button onclick="navigateTo('catalog')" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+        <span>Voltar ao Catálogo de Aplicações</span>
+      </button>
+
+      <!-- Repo Info Card -->
+      <div class="mt-2.5 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-portal-border/80">
+        <div class="flex items-center gap-3">
+          <div id="ws-avatar" class="w-10 h-10 rounded-xl bg-[#131a2a] border border-portal-border flex items-center justify-center font-bold text-base text-white">
+            T
+          </div>
+          <div>
+            <div class="flex items-center gap-2.5">
+              <h2 id="ws-name" class="font-bold text-lg text-white">tarefa</h2>
+              <span id="ws-status" class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Idle
+              </span>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-slate-400 mt-0.5 font-mono">
+              <span id="ws-repo-url" class="flex items-center gap-1 text-slate-300">
+                <i data-lucide="github" class="w-3.5 h-3.5 text-slate-400"></i>
+                github.com/italosilva98/lista-de-tarefas-para-teste
+              </span>
+              <span>•</span>
+              <span class="flex items-center gap-1">
+                <i data-lucide="git-branch" class="w-3.5 h-3.5 text-indigo-400"></i>
+                <span id="ws-branch">main</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botões de Ação Direta -->
+        <div class="flex items-center gap-2">
+          <button onclick="switchWorkspaceTab('command')" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center gap-2 transition shadow-md shadow-indigo-600/20">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+            <span>Pedir Alteração à Squad</span>
+          </button>
+          <a id="ws-link-external" href="#" target="_blank" class="p-2 rounded-lg bg-portal-card hover:bg-[#1a233a] border border-portal-border text-slate-300 transition" title="Abrir no GitHub">
+            <i data-lucide="external-link" class="w-4 h-4"></i>
+          </a>
+          <button onclick="deleteCurrentProject()" class="p-2 rounded-lg bg-portal-card hover:bg-red-500/20 hover:text-red-400 border border-portal-border text-slate-400 transition" title="Excluir projeto">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MENUS SEPARADOS HORIZONTAIS (Exatamente igual ao Grok)    -->
+    <!-- ======================================================== -->
+    <div class="flex items-center gap-2 border-b border-portal-border pb-px text-xs font-medium">
+      
+      <button id="tab-nav-history" onclick="switchWorkspaceTab('history')" class="workspace-nav-tab border-b-2 border-transparent text-slate-400 hover:text-slate-200 px-4 py-2.5 flex items-center gap-2 transition">
+        <i data-lucide="history" class="w-4 h-4"></i>
+        <span>Histórico & Linha do Tempo (<span id="ws-history-counter">0</span>)</span>
+      </button>
+
+      <button id="tab-nav-command" onclick="switchWorkspaceTab('command')" class="workspace-nav-tab border-b-2 border-indigo-500 text-white px-4 py-2.5 flex items-center gap-2 transition">
+        <i data-lucide="terminal" class="w-4 h-4 text-indigo-400"></i>
+        <span>Comando para a Squad</span>
+      </button>
+
+      <button id="tab-nav-squad" onclick="switchWorkspaceTab('squad')" class="workspace-nav-tab border-b-2 border-transparent text-slate-400 hover:text-slate-200 px-4 py-2.5 flex items-center gap-2 transition">
+        <i data-lucide="users" class="w-4 h-4"></i>
+        <span>Agentes da Squad</span>
+      </button>
+
+      <button id="tab-nav-memory" onclick="switchWorkspaceTab('memory')" class="workspace-nav-tab border-b-2 border-transparent text-slate-400 hover:text-slate-200 px-4 py-2.5 flex items-center gap-2 transition">
+        <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+        <span>Memória & Arquitetura</span>
+      </button>
+
+      <button id="tab-nav-files" onclick="switchWorkspaceTab('files')" class="workspace-nav-tab border-b-2 border-transparent text-slate-400 hover:text-slate-200 px-4 py-2.5 flex items-center gap-2 transition">
+        <i data-lucide="file-code" class="w-4 h-4"></i>
+        <span>Arquivos & Diff</span>
+      </button>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- CONTEÚDO DE CADA MENU SEPARADO                           -->
+    <!-- ======================================================== -->
+    <div class="py-5 flex-1 flex flex-col">
+      
+      <!-- MENU 1: HISTÓRICO & LINHA DO TEMPO -->
+      <div id="panel-history" class="hidden space-y-4">
+        <div id="history-list" class="space-y-4">
+          <!-- Renderizado via JS -->
+        </div>
+      </div>
+
+      <!-- MENU 2: COMANDO PARA A SQUAD (Print 2 do Grok) -->
+      <div id="panel-command" class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+        
+        <!-- Esquerda: Instrução para a squad -->
+        <div class="lg:col-span-6 bg-portal-panel border border-portal-border rounded-2xl p-5 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
+                <span>Instrução para a squad</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-1">
+                Descreva a funcionalidade, correção ou refatoração. A squad planeja, implementa na branch da tarefa, valida com o QA e faz o commit.
+              </p>
+            </div>
+
+            <!-- Objetivo da alteração -->
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-2">Objetivo da alteração:</label>
+              <div class="grid grid-cols-4 gap-2">
+                <button type="button" onclick="selectCommandType(this, 'feature')" class="cmd-type-btn py-2 px-1 rounded-xl text-xs font-medium bg-indigo-600 text-white border border-indigo-500 transition flex flex-col items-center gap-1 text-center">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                  <span>Nova Feature</span>
+                </button>
+                <button type="button" onclick="selectCommandType(this, 'bugfix')" class="cmd-type-btn py-2 px-1 rounded-xl text-xs font-medium bg-[#101625] text-slate-400 border border-portal-border hover:text-white transition flex flex-col items-center gap-1 text-center">
+                  <i data-lucide="bug" class="w-3.5 h-3.5"></i>
+                  <span>Bugfix</span>
+                </button>
+                <button type="button" onclick="selectCommandType(this, 'refactor')" class="cmd-type-btn py-2 px-1 rounded-xl text-xs font-medium bg-[#101625] text-slate-400 border border-portal-border hover:text-white transition flex flex-col items-center gap-1 text-center">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                  <span>Refatoração</span>
+                </button>
+                <button type="button" onclick="selectCommandType(this, 'tests')" class="cmd-type-btn py-2 px-1 rounded-xl text-xs font-medium bg-[#101625] text-slate-400 border border-portal-border hover:text-white transition flex flex-col items-center gap-1 text-center">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                  <span>Testes</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Pedido detalhado -->
+            <div>
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                <span>Pedido detalhado:</span>
+                <span id="char-counter" class="font-mono text-[11px]">0/8000</span>
+              </div>
+              <textarea 
+                id="command-prompt"
+                rows="6"
+                oninput="updateCharCounter(this)"
+                placeholder="Ex: Crie um endpoint /api/v2/webhooks com validação HMAC SHA256 e testes de integração."
+                class="w-full bg-[#0a0d14] border border-portal-border rounded-xl p-3.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 font-mono resize-none transition"
+              ></textarea>
+            </div>
+
+            <!-- Sugestões rápidas -->
+            <div>
+              <span class="text-[11px] text-slate-400 block mb-1.5">Sugestões rápidas:</span>
+              <div class="flex flex-wrap gap-1.5">
+                <button onclick="applyQuickPrompt(1)" class="text-[11px] bg-[#101625] hover:bg-[#151e33] border border-portal-border text-slate-300 px-2.5 py-1 rounded-lg transition">
+                  + Autenticação JWT com Refresh Token
+                </button>
+                <button onclick="applyQuickPrompt(2)" class="text-[11px] bg-[#101625] hover:bg-[#151e33] border border-portal-border text-slate-300 px-2.5 py-1 rounded-lg transition">
+                  + Endpoint de Exportação CSV com Stream
+                </button>
+                <button onclick="applyQuickPrompt(3)" class="text-[11px] bg-[#101625] hover:bg-[#151e33] border border-portal-border text-slate-300 px-2.5 py-1 rounded-lg transition">
+                  + Adicionar Suite de Testes Vitest
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 mt-4 border-t border-portal-border flex justify-end">
+            <button 
+              id="btn-run-squad"
+              onclick="executeSquadSprint()"
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-6 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/25">
+              <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+              <span>Disparar Squad (Claude CLI & Devin)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Direita: Terminal & Pipeline de Execução (Print 2 do Grok) -->
+        <div class="lg:col-span-6 bg-portal-panel border border-portal-border rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <!-- Terminal Header -->
+            <div class="flex items-center justify-between pb-3 border-b border-portal-border">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-500/80"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+                <span class="text-xs font-mono text-slate-400 ml-2">claw-portal ~ tarefa • Modo simulação</span>
+              </div>
+              <span id="terminal-badge" class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-portal-card text-slate-400 border border-portal-border">
+                STANDBY
+              </span>
+            </div>
+
+            <!-- Agent Nodes Bar -->
+            <div class="grid grid-cols-4 gap-2 py-3 border-b border-portal-border text-center">
+              <div id="node-pm" class="p-2 rounded-lg bg-[#101625] border border-portal-border text-[11px] text-slate-400 flex flex-col items-center">
+                <span class="font-bold">PM</span>
+                <span class="text-[9px] text-slate-500">Planejar</span>
+              </div>
+              <div id="node-arch" class="p-2 rounded-lg bg-[#101625] border border-portal-border text-[11px] text-slate-400 flex flex-col items-center">
+                <span class="font-bold">Arquiteto</span>
+                <span class="text-[9px] text-slate-500">Mapear</span>
+              </div>
+              <div id="node-coder" class="p-2 rounded-lg bg-[#101625] border border-portal-border text-[11px] text-slate-400 flex flex-col items-center">
+                <span class="font-bold">Coder</span>
+                <span class="text-[9px] text-slate-500">Implementar</span>
+              </div>
+              <div id="node-qa" class="p-2 rounded-lg bg-[#101625] border border-portal-border text-[11px] text-slate-400 flex flex-col items-center">
+                <span class="font-bold">QA</span>
+                <span class="text-[9px] text-slate-500">Testar</span>
+              </div>
+            </div>
+
+            <!-- Terminal Output Window -->
+            <div id="terminal-screen" class="mt-3 bg-[#080b12] rounded-xl p-4 font-mono text-xs text-slate-300 min-h-[300px] max-h-[380px] overflow-y-auto space-y-2">
+              <div class="text-slate-500 italic">// Aguardando um pedido para iniciar a squad...</div>
+            </div>
+          </div>
+
+          <!-- Bottom Finished PR Box -->
+          <div id="terminal-finished-box" class="hidden mt-3 p-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2 text-emerald-400 font-semibold">
+              <i data-lucide="check-circle" class="w-4 h-4"></i>
+              <span>Sprint finalizada com sucesso!</span>
+            </div>
+            <button onclick="switchWorkspaceTab('history')" class="text-xs text-indigo-400 hover:underline">
+              Ver no Histórico &rarr;
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MENU 3: AGENTES DA SQUAD (Print 3 do Grok) -->
+      <div id="panel-squad" class="hidden space-y-5">
+        <div>
+          <h3 class="text-base font-bold text-white">Composição da squad</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Quatro agentes em sequência, cada um só com as ferramentas do seu papel. Motor: <span class="text-slate-300 font-mono">Modo simulação / Claude CLI & Devin</span>.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          
+          <!-- Agente PM -->
+          <div class="bg-portal-panel border border-portal-border rounded-2xl p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
+                  <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">IDLE</span>
+              </div>
+              <h4 class="font-bold text-sm text-white mt-4">Agente PM</h4>
+              <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                Lê o pedido, o AI_CONTEXT.md e a árvore do repositório; define o nome da branch e o checklist de implementação.
+              </p>
+            </div>
+            <div class="mt-6 pt-4 border-t border-portal-border">
+              <span class="text-[10px] text-slate-500 uppercase tracking-wider font-mono block mb-1">FERRAMENTAS:</span>
+              <span class="text-xs text-slate-400 font-mono">nenhuma (só planeja)</span>
+            </div>
+          </div>
+
+          <!-- Agente Arquiteto -->
+          <div class="bg-portal-panel border border-portal-border rounded-2xl p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+                  <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">IDLE</span>
+              </div>
+              <h4 class="font-bold text-sm text-white mt-4">Agente Arquiteto</h4>
+              <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                Mapeia o código só com ferramentas de leitura e devolve o plano arquivo por arquivo para o Coder.
+              </p>
+            </div>
+            <div class="mt-6 pt-4 border-t border-portal-border">
+              <span class="text-[10px] text-slate-500 uppercase tracking-wider font-mono block mb-1.5">FERRAMENTAS:</span>
+              <div class="flex flex-wrap gap-1">
+                <span class="text-[11px] bg-[#101625] text-slate-300 font-mono px-2 py-0.5 rounded border border-portal-border">list_directory</span>
+                <span class="text-[11px] bg-[#101625] text-slate-300 font-mono px-2 py-0.5 rounded border border-portal-border">read_file</span>
+                <span class="text-[11px] bg-[#101625] text-slate-300 font-mono px-2 py-0.5 rounded border border-portal-border">search_code</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agente Coder -->
+          <div class="bg-portal-panel border border-portal-border rounded-2xl p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                  <i data-lucide="code-2" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">IDLE</span>
+              </div>
+              <h4 class="font-bold text-sm text-white mt-4">Agente Coder</h4>
+              <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                Cria e altera os arquivos do plano dentro da pasta do app, sempre na branch da tarefa. Aciona o Devin CLI ou Claude CLI.
+              </p>
+            </div>
+            <div class="mt-6 pt-4 border-t border-portal-border">
+              <span class="text-[10px] text-slate-500 uppercase tracking-wider font-mono block mb-1.5">FERRAMENTAS:</span>
+              <div class="flex flex-wrap gap-1">
+                <span class="text-[11px] bg-[#101625] text-slate-300 font-mono px-2 py-0.5 rounded border border-portal-border">read_file</span>
+                <span class="text-[11px] bg-[#101625] text-slate-300 font-mono px-2 py-0.5 rounded border border-portal-border">write_file</span>
+                <span class="text-[11px] bg-[#101625] text-slate-300 font-mono px-2 py-0.5 rounded border border-portal-border">replace_in_file</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agente QA -->
+          <div class="bg-portal-panel border border-portal-border rounded-2xl p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">IDLE</span>
+              </div>
+              <h4 class="font-bold text-sm text-white mt-4">Agente QA</h4>
+              <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                Analisa o diff e roda um comando de validação permitido; se reprovar, devolve ao Coder (até 2 novas tentativas).
+              </p>
+            </div>
+            <div class="mt-6 pt-4 border-t border-portal-border">
+              <span class="text-[10px] text-slate-500 uppercase tracking-wider font-mono block mb-1">FERRAMENTAS:</span>
+              <span class="text-[11px] bg-[#101625] text-slate-300 font-mono px-2 py-0.5 rounded border border-portal-border inline-block mb-2">run_command</span>
+              <p class="text-[10px] text-slate-500 font-mono leading-tight">
+                Comandos permitidos: npm run build • npm test • npx tsc --noEmit • pytest
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MENU 4: MEMÓRIA & ARQUITETURA -->
+      <div id="panel-memory" class="hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold text-white">Memória Viva (AI_CONTEXT.md)</h3>
+            <p class="text-xs text-slate-400">Contexto lido pelo PM e Arquiteto antes de qualquer modificação.</p>
+          </div>
+          <button onclick="saveAiContext()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
+            Salvar Contexto
+          </button>
+        </div>
+        <textarea 
+          id="ws-ai-context-editor" 
+          rows="16" 
+          class="w-full bg-portal-panel border border-portal-border rounded-2xl p-4 font-mono text-xs text-slate-200 focus:outline-none focus:border-indigo-500 resize-none"
+        ></textarea>
+      </div>
+
+      <!-- MENU 5: ARQUIVOS & DIFF (Print 1 do Grok) -->
+      <div id="panel-files" class="hidden space-y-6">
+        
+        <!-- Top Section: Diff da última tarefa -->
+        <div>
+          <h3 class="text-sm font-bold text-white mb-2">Diff da última tarefa</h3>
+          <div id="last-diff-box" class="bg-portal-panel border border-dashed border-portal-border rounded-2xl p-10 flex flex-col items-center justify-center text-center">
+            <i data-lucide="file-diff" class="w-10 h-10 text-slate-500 mb-2"></i>
+            <p class="text-xs text-slate-400">Nenhuma tarefa com diff ainda. O diff aparece aqui quando a squad concluir uma tarefa.</p>
+          </div>
+        </div>
+
+        <!-- Bottom Section: Explorador de Arquivos (Split: Árvore | Visualizador) -->
+        <div>
+          <h3 class="text-sm font-bold text-white mb-3">Explorador de arquivos</h3>
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[480px]">
+            
+            <!-- Coluna Árvore de Arquivos (4.5 cols) -->
+            <div class="lg:col-span-4 bg-portal-panel border border-portal-border rounded-2xl p-4 flex flex-col">
+              <div class="flex items-center justify-between pb-3 border-b border-portal-border text-xs text-slate-400 font-mono">
+                <span class="uppercase tracking-wider text-[11px] font-bold text-slate-300">ARQUIVOS</span>
+                <button onclick="reloadFileTree()" class="hover:text-white transition" title="Recarregar">
+                  <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+
+              <div id="file-tree-container" class="mt-3 space-y-1 font-mono text-xs overflow-y-auto max-h-[460px] pr-1">
+                <!-- Pastas e Arquivos hierárquicos -->
+              </div>
+            </div>
+
+            <!-- Coluna Visualizador de Conteúdo (7.5 cols) -->
+            <div class="lg:col-span-8 bg-portal-panel border border-portal-border rounded-2xl p-4 flex flex-col">
+              <div class="flex items-center justify-between pb-3 border-b border-portal-border font-mono text-xs">
+                <span id="active-file-title" class="text-indigo-400 font-medium">banco/esquema.sql</span>
+                <span id="active-file-size" class="text-slate-500 text-[11px]">643 B</span>
+              </div>
+              <div class="mt-3 flex-1 bg-[#090c13] rounded-xl p-4 border border-portal-border overflow-auto max-h-[460px]">
+                <pre id="active-file-content" class="font-mono text-xs text-slate-300 leading-relaxed whitespace-pre"></pre>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL: NOVO REPO / IMPORTAR               -->
+  <!-- ========================================== -->
+  <div id="new-app-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-portal-panel border border-portal-border rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-base text-white">Adicionar Aplicação</h3>
+        <button onclick="closeModal('new-app-modal')" class="text-slate-400 hover:text-white text-sm">✕</button>
+      </div>
+
+      <form onsubmit="handleCreateRepo(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Nome do Projeto:</label>
+          <input id="modal-repo-name" type="text" required placeholder="ex: backend-auth-service" class="w-full bg-[#0a0d14] border border-portal-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">URL do Repositório GitHub:</label>
+          <input id="modal-repo-url" type="url" required placeholder="https://github.com/empresa/backend-auth-service" class="w-full bg-[#0a0d14] border border-portal-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Stack Principal:</label>
+          <input id="modal-repo-stack" type="text" placeholder="ex: Next.js, TypeScript, PostgreSQL" class="w-full bg-[#0a0d14] border border-portal-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('new-app-modal')" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Cancelar</button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
+            Conectar Repositório
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT: ESTADO & INTERATIVIDADE        -->
+  <!-- ========================================== -->
+  <script>
+    // Repositórios Cadastrados (com estrutura de arquivos completa)
+    const initialProjects = [
+      {
+        id: "proj-tarefa",
+        name: "tarefa",
+        githubUrl: "https://github.com/italosilva98/lista-de-tarefas-para-teste-de-publicacao-vercel-aws-lambda-e-neon",
+        defaultBranch: "main",
+        status: "Idle",
+        stack: ["Next.js", "TypeScript", "PostgreSQL", "Neon"],
+        aiContext: `# AI_CONTEXT.md — tarefa\n\n## Stack Principal\n- Next.js 14 App Router\n- TypeScript, TailwindCSS\n- Banco de Dados PostgreSQL (Neon Serverless)\n\n## Diretrizes da Squad\n- Todas as tabelas devem usar UUID ou BIGINT generated always as identity.\n- Preservar funções assíncronas em /servidor e /banco.`,
+        files: {
+          "banco/esquema.sql": `CREATE TABLE IF NOT EXISTS tarefas (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  titulo TEXT NOT NULL CHECK (char_length(btrim(titulo)) BETWEEN 1 AND 200),
+  ordem INTEGER NOT NULL DEFAULT 1 CHECK (ordem BETWEEN 1 AND 999),
+  feita BOOLEAN NOT NULL DEFAULT FALSE,
+  criada_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE tarefas
+  ADD COLUMN IF NOT EXISTS ordem INTEGER NOT NULL DEFAULT 1 CHECK (ordem BETWEEN 1 AND 999);
+
+CREATE INDEX IF NOT EXISTS idx_tarefas_ordem ON tarefas (feita ASC, criada_em DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_tarefas_ordem_v2 ON tarefas (feita ASC, ordem ASC, criada_em DESC, id DESC);`,
+          
+          "banco/conexao.ts": `import { Pool } from 'pg';
+
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});`,
+
+          "servidor/api.ts": `import express from 'express';
+import { pool } from '../banco/conexao';
+
+export const router = express.Router();
+
+router.get('/tarefas', async (req, res) => {
+  const { rows } = await pool.query('SELECT * FROM tarefas ORDER BY ordem ASC');
+  res.json(rows);
+});`,
+
+          "tela/App.tsx": `import React, { useState } from 'react';
+
+export default function App() {
+  const [tarefas, setTarefas] = useState([]);
+  return (
+    <div className="p-6 max-w-lg mx-auto">
+      <h1 className="text-xl font-bold">Gerenciador de Tarefas</h1>
+    </div>
+  );
+}`,
+
+          "AI_CONTEXT.md": `# AI_CONTEXT.md — tarefa
+
+## Stack & Arquitetura
+- Backend Serverless com PostgreSQL Neon
+- Frontend em React + TypeScript
+- Endpoints REST com pool assíncrono`,
+
+          "arquitetura.drawio": `<xml><diagram name="Arquitetura-Geral"></diagram></xml>`,
+          "ARQUITETURA.md": `# Decisões de Arquitetura\n1. Modelo serverless para AWS Lambda.\n2. Conexões de banco através de pooling neon.`,
+          "arquitetura.svg": `<svg width="100" height="100"><circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" /></svg>`,
+          "DECISOES.md": `# Registro de Decisões Técnicas (ADR)\n- ADR-001: Adoção do pool de conexões Neon.`,
+          "ESPECIFICACAO.md": `# Especificação Funcional\n- CRUD completo de tarefas com reordenação manual.`
+        },
+        history: []
+      },
+      {
+        id: "proj-orchestrator",
+        name: "agent-orchestrator",
+        githubUrl: "https://github.com/italosilva98/agent-orchestrator.git",
+        defaultBranch: "main",
+        status: "Idle",
+        stack: ["TypeScript", "Next.js", "Prisma", "SQLite"],
+        aiContext: `# AI_CONTEXT.md - agent-orchestrator\nPlataforma de orquestração multi-agente.`,
+        files: {
+          "src/index.ts": `console.log("Agent Orchestrator Active");`,
+          "AI_CONTEXT.md": `# AI_CONTEXT.md - agent-orchestrator`
+        },
+        history: []
+      }
+    ];
+
+    let state = {
+      projects: [...initialProjects],
+      currentProjectId: "proj-tarefa",
+      currentWorkspaceTab: "command", // 'history', 'command', 'squad', 'memory', 'files'
+      activeFileKey: "banco/esquema.sql",
+      selectedCommandType: "feature",
+      isSprintRunning: false
+    };
+
+    // INICIALIZAÇÃO
+    window.onload = function() {
+      renderCatalog();
+      openWorkspace("proj-tarefa");
+      lucide.createIcons();
+    };
+
+    // RENDERIZAÇÃO DO CATÁLOGO
+    function renderCatalog() {
+      const search = (document.getElementById('catalog-search')?.value || '').toLowerCase();
+      const grid = document.getElementById('catalog-grid');
+      
+      const filtered = state.projects.filter(p => 
+        p.name.toLowerCase().includes(search) || 
+        p.stack.some(s => s.toLowerCase().includes(search))
+      );
+
+      grid.innerHTML = filtered.map(p => `
+        <div onclick="openWorkspace('${p.id}')" class="bg-portal-panel hover:bg-[#12192b] border border-portal-border hover:border-indigo-500/50 rounded-2xl p-5 transition cursor-pointer flex flex-col justify-between shadow-lg">
+          <div>
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-portal-card border border-portal-border flex items-center justify-center font-bold text-white text-base">
+                  ${p.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 class="font-bold text-base text-white hover:text-indigo-400 transition">${p.name}</h3>
+                  <p class="text-xs text-slate-400 truncate max-w-[210px] font-mono">${p.githubUrl.replace('https://', '')}</p>
+                </div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                ${p.status}
+              </span>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 mt-4">
+              ${p.stack.map(st => `
+                <span class="text-[10px] font-mono bg-[#101625] text-slate-300 border border-portal-border px-2 py-0.5 rounded">
+                  ${st}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="mt-6 pt-3.5 border-t border-portal-border/70 flex items-center justify-between text-xs text-slate-400 font-mono">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="git-branch" class="w-3.5 h-3.5 text-indigo-400"></i>
+              ${p.defaultBranch}
+            </span>
+            <span>${p.history.length} sprints entregues</span>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    // ABRIR WORKSPACE DE UM REPO
+    function openWorkspace(projectId) {
+      state.currentProjectId = projectId;
+      const proj = state.projects.find(p => p.id === projectId);
+      if (!proj) return;
+
+      // Popula dados do header
+      document.getElementById('ws-avatar').innerText = proj.name.charAt(0).toUpperCase();
+      document.getElementById('ws-name').innerText = proj.name;
+      document.getElementById('ws-repo-url').innerHTML = `<i data-lucide="github" class="w-3.5 h-3.5 text-slate-400"></i> ${proj.githubUrl.replace('https://', '')}`;
+      document.getElementById('ws-branch').innerText = proj.defaultBranch;
+      document.getElementById('ws-link-external').href = proj.githubUrl;
+      document.getElementById('ws-ai-context-editor').value = proj.aiContext;
+      document.getElementById('ws-history-counter').innerText = proj.history.length;
+
+      renderHistory();
+      renderFileTree();
+      selectFile(Object.keys(proj.files)[0] || "AI_CONTEXT.md");
+
+      navigateTo('workspace');
+      switchWorkspaceTab('command');
+    }
+
+    // NAVEGAÇÃO ENTRE TELAS GLOBAIS
+    function navigateTo(view) {
+      if (view === 'catalog') {
+        document.getElementById('view-catalog').classList.remove('hidden');
+        document.getElementById('view-workspace').classList.add('hidden');
+        renderCatalog();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        document.getElementById('view-catalog').classList.add('hidden');
+        document.getElementById('view-workspace').classList.remove('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    // NAVEGAÇÃO ENTRE OS MENUS SEPARADOS (Grok style)
+    function switchWorkspaceTab(tab) {
+      state.currentWorkspaceTab = tab;
+      const tabs = ['history', 'command', 'squad', 'memory', 'files'];
+
+      tabs.forEach(t => {
+        const navBtn = document.getElementById(`tab-nav-${t}`);
+        const panel = document.getElementById(`panel-${t}`);
+
+        if (t === tab) {
+          navBtn.className = "workspace-nav-tab border-b-2 border-indigo-500 text-white font-semibold px-4 py-2.5 flex items-center gap-2 transition";
+          panel.classList.remove('hidden');
+        } else {
+          navBtn.className = "workspace-nav-tab border-b-2 border-transparent text-slate-400 hover:text-slate-200 px-4 py-2.5 flex items-center gap-2 transition";
+          panel.classList.add('hidden');
+        }
+      });
+      lucide.createIcons();
+    }
+
+    // EXPLORADOR DE ARQUIVOS HIERÁRQUICO
+    function renderFileTree() {
+      const proj = state.projects.find(p => p.id === state.currentProjectId);
+      if (!proj) return;
+
+      const container = document.getElementById('file-tree-container');
+      const files = Object.keys(proj.files);
+
+      // Agrupa por pastas
+      const folders = {};
+      const rootFiles = [];
+
+      files.forEach(f => {
+        if (f.includes('/')) {
+          const [folder, filename] = f.split('/');
+          if (!folders[folder]) folders[folder] = [];
+          folders[folder].push(f);
+        } else {
+          rootFiles.push(f);
+        }
+      });
+
+      let html = '';
+
+      // Pastas com seta expansível
+      Object.keys(folders).forEach(folderName => {
+        html += `
+          <div class="mb-1">
+            <div class="flex items-center gap-1.5 text-slate-300 py-1 px-1.5 rounded hover:bg-[#131a2b] cursor-pointer">
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+              <i data-lucide="folder" class="w-3.5 h-3.5 text-indigo-400"></i>
+              <span class="font-semibold">${folderName}</span>
+            </div>
+            <div class="pl-5 space-y-0.5 mt-0.5 border-l border-portal-border ml-2">
+              ${folders[folderName].map(fullPath => {
+                const isActive = fullPath === state.activeFileKey;
+                const fileNameOnly = fullPath.split('/')[1];
+                return `
+                  <button onclick="selectFile('${fullPath}')" class="w-full text-left py-1 px-2 rounded flex items-center gap-2 transition truncate ${isActive ? 'file-tree-active' : 'text-slate-400 hover:text-slate-200 hover:bg-[#131a2b]'}">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                    <span>${fileNameOnly}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      // Arquivos soltos na raiz
+      rootFiles.forEach(f => {
+        const isActive = f === state.activeFileKey;
+        html += `
+          <button onclick="selectFile('${f}')" class="w-full text-left py-1.5 px-2 rounded flex items-center gap-2 transition truncate ${isActive ? 'file-tree-active' : 'text-slate-400 hover:text-slate-200 hover:bg-[#131a2b]'}">
+            <i data-lucide="file-code" class="w-3.5 h-3.5"></i>
+            <span>${f}</span>
+          </button>
+        `;
+      });
+
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function selectFile(filePath) {
+      state.activeFileKey = filePath;
+      const proj = state.projects.find(p => p.id === state.currentProjectId);
+      if (!proj) return;
+
+      const content = proj.files[filePath] || "// Arquivo vazio";
+      document.getElementById('active-file-title').innerText = filePath;
+      document.getElementById('active-file-size').innerText = `${content.length} B`;
+      document.getElementById('active-file-content').textContent = content;
+
+      renderFileTree();
+    }
+
+    function reloadFileTree() {
+      renderFileTree();
+    }
+
+    // SELEÇÃO DO TIPO DE COMANDO
+    function selectCommandType(btn, type) {
+      state.selectedCommandType = type;
+      document.querySelectorAll('.cmd-type-btn').forEach(b => {
+        b.className = "cmd-type-btn py-2 px-1 rounded-xl text-xs font-medium bg-[#101625] text-slate-400 border border-portal-border hover:text-white transition flex flex-col items-center gap-1 text-center";
+      });
+      btn.className = "cmd-type-btn py-2 px-1 rounded-xl text-xs font-medium bg-indigo-600 text-white border border-indigo-500 transition flex flex-col items-center gap-1 text-center";
+    }
+
+    function updateCharCounter(el) {
+      document.getElementById('char-counter').innerText = `${el.value.length}/8000`;
+    }
+
+    function applyQuickPrompt(id) {
+      const p = document.getElementById('command-prompt');
+      if (id === 1) p.value = "Implementar autenticação JWT segura com rota de Refresh Token e blacklist de sessão.";
+      if (id === 2) p.value = "Criar endpoint /api/v1/export/csv com streaming assíncrono para relatórios pesados.";
+      if (id === 3) p.value = "Adicionar suite completa de testes com Vitest nas rotas de CRUD garantindo 90% de cobertura.";
+      updateCharCounter(p);
+    }
+
+    // DISPARO E SIMULAÇÃO DA SQUAD
+    async function executeSquadSprint() {
+      const promptInput = document.getElementById('command-prompt');
+      const promptText = promptInput.value.trim();
+      if (!promptText) {
+        alert("Por favor, digite uma instrução detalhada antes de iniciar a Squad.");
+        return;
+      }
+
+      if (state.isSprintRunning) return;
+      state.isSprintRunning = true;
+
+      const proj = state.projects.find(p => p.id === state.currentProjectId);
+      const btn = document.getElementById('btn-run-squad');
+      const badge = document.getElementById('terminal-badge');
+      const terminal = document.getElementById('terminal-screen');
+      const finishBox = document.getElementById('terminal-finished-box');
+
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+      finishBox.classList.add('hidden');
+      terminal.innerHTML = '';
+
+      function logLine(role, msg, color = "text-slate-300") {
+        const div = document.createElement('div');
+        div.className = `leading-relaxed ${color}`;
+        div.innerHTML = `<span class="text-slate-500 font-mono text-[11px]">[${new Date().toLocaleTimeString()}]</span> <span class="font-bold text-white">${role}:</span> ${msg}`;
+        terminal.appendChild(div);
+        terminal.scrollTop = terminal.scrollHeight;
+      }
+
+      function setActiveNode(nodeId) {
+        ['pm', 'arch', 'coder', 'qa'].forEach(n => {
+          const el = document.getElementById(`node-${n}`);
+          if (n === nodeId) {
+            el.className = "p-2 rounded-lg bg-indigo-600/30 border border-indigo-500 text-[11px] text-white flex flex-col items-center scale-105 transition";
+          } else {
+            el.className = "p-2 rounded-lg bg-[#101625] border border-portal-border text-[11px] text-slate-500 flex flex-col items-center opacity-60";
+          }
+        });
+      }
+
+      const delay = ms => new Promise(r => setTimeout(r, ms));
+
+      badge.innerText = "PROVISIONANDO";
+      logLine("SYSTEM", `Provisionando sandbox e criando branch 'feat/squad-${Date.now().toString().slice(-4)}'...`, "text-sky-400");
+      await delay(900);
+
+      // PM
+      setActiveNode('pm');
+      badge.innerText = "AGENTE PM";
+      logLine("PM", `Decompondo solicitação: "${promptText.slice(0, 50)}..."`, "text-blue-300");
+      await delay(1100);
+      logLine("PM", "Checklist técnico definido. Passando contexto para o Arquiteto.", "text-blue-300");
+      await delay(800);
+
+      // Arquiteto
+      setActiveNode('arch');
+      badge.innerText = "ARQUITETO";
+      logLine("ARQUITETO", "Inspecionando banco/esquema.sql e lendo AI_CONTEXT.md...", "text-purple-300");
+      await delay(1000);
+      logLine("ARQUITETO", "Mapeamento concluído. Plano de arquivos atribuído ao Coder via Devin CLI.", "text-purple-300");
+      await delay(800);
+
+      // Coder
+      setActiveNode('coder');
+      badge.innerText = "CODER (DEVIN)";
+      logLine("CODER", "Executando implementação de código nos arquivos do repositório...", "text-amber-300");
+      await delay(1200);
+      logLine("CODER", "Criado novo módulo 'servidor/webhooks.ts' e atualizada memória do app.", "text-amber-300");
+      await delay(1000);
+
+      // QA
+      setActiveNode('qa');
+      badge.innerText = "QA REVIEWER";
+      logLine("QA", "Executando suite de testes: npm run build & npx tsc --noEmit...", "text-emerald-300");
+      await delay(1200);
+      logLine("QA", "0 erros encontrados. Commit e Pull Request criados com sucesso!", "text-emerald-400");
+      await delay(600);
+
+      badge.innerText = "CONCLUÍDO";
+      badge.className = "text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+
+      // Adiciona ao repositório
+      const newSprint = {
+        title: promptText.slice(0, 55),
+        type: state.selectedCommandType.toUpperCase(),
+        branch: `feature/ai-${Date.now().toString().slice(-4)}`,
+        commit: Math.random().toString(16).slice(2, 9),
+        summary: `Módulo gerado e testado pela Squad Dev com auto-revisão aprovada.`,
+        date: "Agora mesmo"
+      };
+
+      proj.history.unshift(newSprint);
+      proj.files["servidor/webhooks.ts"] = `// Gerado pela Squad Dev\nexport async function handleWebhook() {\n  return { ok: true, task: "${promptText}" };\n}`;
+
+      document.getElementById('ws-history-counter').innerText = proj.history.length;
+      finishBox.classList.remove('hidden');
+
+      // Atualiza o Diff do menu Arquivos & Diff
+      document.getElementById('last-diff-box').innerHTML = `
+        <div class="w-full text-left">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-portal-border text-xs text-slate-400 font-mono">
+            <span>+ servidor/webhooks.ts (Branch: ${newSprint.branch})</span>
+            <span class="text-emerald-400">+12 linhas</span>
+          </div>
+          <pre class="p-3 bg-[#080b12] rounded-xl font-mono text-xs text-emerald-400 overflow-x-auto">+ export async function handleWebhook() {\n+   return { ok: true, task: "${promptText}" };\n+ }</pre>
+        </div>
+      `;
+
+      btn.disabled = false;
+      btn.classList.remove('opacity-50');
+      state.isSprintRunning = false;
+      renderHistory();
+      renderFileTree();
+    }
+
+    // HISTÓRICO
+    function renderHistory() {
+      const proj = state.projects.find(p => p.id === state.currentProjectId);
+      if (!proj) return;
+
+      const list = document.getElementById('history-list');
+      if (proj.history.length === 0) {
+        list.innerHTML = `
+          <div class="bg-portal-panel border border-dashed border-portal-border rounded-2xl p-8 text-center text-xs text-slate-400">
+            Nenhuma sprint executada ainda. Use a aba "Comando para a Squad" para solicitar a primeira alteração.
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = proj.history.map(item => `
+        <div class="bg-portal-panel border border-portal-border rounded-2xl p-5 shadow-lg space-y-3">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                ${item.type}
+              </span>
+              <h4 class="font-bold text-sm text-white">${item.title}</h4>
+            </div>
+            <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              COMPLETED
+            </span>
+          </div>
+          <div class="p-3 rounded-xl bg-[#090b12] border border-portal-border text-xs text-slate-300">
+            <span class="font-semibold text-white">Entrega:</span> ${item.summary}
+          </div>
+          <div class="pt-3 border-t border-portal-border/70 flex items-center justify-between text-xs text-slate-400 font-mono">
+            <span class="flex items-center gap-1.5 text-slate-300">
+              <i data-lucide="git-branch" class="w-3.5 h-3.5 text-indigo-400"></i>
+              ${item.branch}
+            </span>
+            <span class="text-slate-400">${item.date}</span>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function saveAiContext() {
+      const val = document.getElementById('ws-ai-context-editor').value;
+      const proj = state.projects.find(p => p.id === state.currentProjectId);
+      if (proj) {
+        proj.aiContext = val;
+        alert("Contexto salvo com sucesso!");
+      }
+    }
+
+    function deleteCurrentProject() {
+      if (confirm("Deseja realmente remover esta aplicação do portal?")) {
+        state.projects = state.projects.filter(p => p.id !== state.currentProjectId);
+        navigateTo('catalog');
+      }
+    }
+
+    // MODAL NOVO APP
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function handleCreateRepo(e) {
+      e.preventDefault();
+      const name = document.getElementById('modal-repo-name').value.trim();
+      const url = document.getElementById('modal-repo-url').value.trim();
+      const stack = document.getElementById('modal-repo-stack').value.trim() || 'TypeScript, Node.js';
+
+      const newProj = {
+        id: `proj-${Date.now()}`,
+        name,
+        githubUrl: url,
+        defaultBranch: "main",
+        status: "Idle",
+        stack: stack.split(',').map(s => s.trim()),
+        aiContext: `# AI_CONTEXT.md — ${name}\nRepositório gerenciado pela Squad Dev.`,
+        files: {
+          "src/index.ts": `console.log("App ${name} iniciado.");`,
+          "AI_CONTEXT.md": `# AI_CONTEXT.md — ${name}`
+        },
+        history: []
+      };
+
+      state.projects.unshift(newProj);
+      closeModal('new-app-modal');
+      e.target.reset();
+      openWorkspace(newProj.id);
+    }
+  </script>
+</body>
+</html>
